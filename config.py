@@ -68,7 +68,7 @@ class Settings:
     # ============================================
     # CORS
     # ============================================
-    cors_origins: str = os.getenv("CORS_ORIGINS", "*")
+    cors_origins: str = os.getenv("CORS_ORIGINS", "https://voice-agent-front.vercel.app")
 
     def validate(self):
         """Check if required settings are present"""
