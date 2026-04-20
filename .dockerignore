@@ -1,0 +1,29 @@
+# Python caches and bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+venvf/
+.venv/
+
+# Local environment and logs
+.env
+.env.*
+*.log
+
+# VCS and editor files
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/.next/
+
+# OS junk
+.DS_Store
+Thumbs.db

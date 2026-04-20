@@ -1,0 +1,34 @@
+# Core Framework
+livekit
+livekit-agents
+
+# LLM & LangGraph
+langgraph
+langchain-google-genai
+langchain-core
+
+# Speech
+livekit-plugins-deepgram
+livekit-plugins-google
+livekit-plugins-silero
+
+
+# Database
+motor
+pymongo
+redis
+
+# FastAPI (if you need HTTP endpoints)
+fastapi
+uvicorn
+
+# Utilities
+python-dotenv
+pydantic
+pydantic-settings
+av
+
+# Development
+pytest
+pytest-asyncio
+livekit-plugins-elevenlabs

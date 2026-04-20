@@ -1,0 +1,120 @@
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: newvoice-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-real_estate}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: newvoice-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: newvoice-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: ${MONGO_DB_NAME:-real_estate}
+      MONGO_PROPERTY_COLLECTION: ${MONGO_PROPERTY_COLLECTION:-properties}
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+      DEEPGRAM_LANGUAGE: ${DEEPGRAM_LANGUAGE:-multi}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      LIVEKIT_URL: ${LIVEKIT_URL:-ws://host.docker.internal:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
+      JOIN_ACCESS_KEY: ${JOIN_ACCESS_KEY:-}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: newvoice-agent
+    restart: unless-stopped
+    command: ["python", "run.py", "dev"]
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: ${MONGO_DB_NAME:-real_estate}
+      MONGO_PROPERTY_COLLECTION: ${MONGO_PROPERTY_COLLECTION:-properties}
+      REDIS_URL: redis://redis:6379
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+      DEEPGRAM_LANGUAGE: ${DEEPGRAM_LANGUAGE:-multi}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      LIVEKIT_URL: ${LIVEKIT_URL:-ws://host.docker.internal:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
+      JOIN_ACCESS_KEY: ${JOIN_ACCESS_KEY:-}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: newvoice-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+      NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-${LIVEKIT_URL:-ws://localhost:7880}}
+      NEXT_PUBLIC_JOIN_ACCESS_KEY: ${NEXT_PUBLIC_JOIN_ACCESS_KEY:-}
+
+volumes:
+  mongo_data:
+  redis_data:
