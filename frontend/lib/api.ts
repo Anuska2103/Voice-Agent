@@ -18,12 +18,7 @@ function getApiBaseUrl(): string {
     return configured;
   }
 
-  // For cloud/browser deployments, default to same origin when not explicitly configured.
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-
-  return "http://localhost:8000";
+  return "https://voice-agent-v18z.onrender.com";
 }
 
 export async function fetchLivekitToken(payload: TokenPayload): Promise<TokenResponse> {
